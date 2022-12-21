@@ -1,12 +1,12 @@
 from rest_framework import status  , generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from account.models import User , Phone 
+from account.models import User , Phone , UserBank
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import DjangoUnicodeDecodeError, force_bytes,   force_str, smart_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from .serializers import (
-    SignupPhoneSerializer , SignupPhoneVerifySerializer , SignupSerializer,
+    SignupPhoneSerializer , SignupPhoneVerifySerializer , SignupSerializer, UserBankSerializer,
     UserSerializer , AccountSetupBvnSerializer , ResetPasswordRequestEmailSerializer,
     ChangePasswordSerializer , SetNewPasswordSerializer , LoginSerializer ,
 )
@@ -23,8 +23,8 @@ from django.contrib.auth import authenticate
 from uuid import uuid4
 
 from rest_framework.exceptions import PermissionDenied , NotAuthenticated
-
-
+from django.conf import settings
+from django.forms import model_to_dict
 
 
 class PhoneApiView(generics.GenericAPIView):
@@ -132,16 +132,48 @@ class AddDebitCardApiView(generics.GenericAPIView):
   
     def get(self, request, *args, **kwargs):
         user = User.objects.get(id=1)
+        paystack_public = settings.PAYSTACK_PUBLIC_KEY 
         uuidb64 = urlsafe_base64_encode(force_bytes(user.id))
         reference = f'ref_{uuidb64}_{uuid4().hex}' 
-        Transaction.objects.create(
+        transaction = Transaction.objects.create(
             user=user, type='card', amount='50', 
             reference=reference 
         )
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        m = model_to_dict(transaction)
+        response = {
+            'paystack_public':paystack_public,
+            'email': user.email, 
+            'reference': reference ,
+        }
+        return Response( response , status=status.HTTP_200_OK)
+
+# UserBankSerializer
+class AddUserBankApiView(generics.GenericAPIView):
+    serializer_class = UserBankSerializer
+  
+    def post(self, request, *args, **kwargs):
+        user = User.objects.get(id=1)
+        data = request.data
+        bank = UserBank.objects.create(
+            user=user,
+            name= data['name'],
+            code =  data['code'],
+            account_number= data['account_number'],
+            account_name= data['account_name']
+        )
+        response = {
+            'success':True,
+            'detail': 'Account added successfully',
+        }
+        return Response( response , status=status.HTTP_201_CREATED )
 
 
 
+class UserBankRetrieveApiView(generics.RetrieveAPIView):
+    serializer_class = AccountSetupBvnSerializer
+    lookup_field='uuid'
+  
+    
 
 
 

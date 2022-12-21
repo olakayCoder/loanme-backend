@@ -13,7 +13,11 @@ from .serializers import (
     LoanRequestSerializer, LoanSerializer , LoanOfferSerializer,
     LoanOfferAcceptSerializer , LoanApplicationSerializer ,LoanScheduleSerializer,
 )
-from account.api.serializers import UserSerializer
+from account.api.serializers import (
+    UserSerializer , UserBankSerializer,
+    UserCardSerializer
+)
+from account.models import UserBank , UserCard
 from helpers.utils import LoanApplicationScore
 from helpers.generators import CustomValuesGenerator
 import json
@@ -306,3 +310,16 @@ class CustomersListApiView(generics.ListAPIView):
     # @permission_classes([IsAuthenticated])
     # def get(self, request, *args, **kwargs):
     #     return super().get(request, *args, **kwargs)
+
+
+
+
+
+class UserBankListApiView(generics.ListAPIView):
+    queryset = UserBank.objects.all()
+    serializer_class = UserBankSerializer 
+
+
+class UserCardListApiView(generics.ListAPIView):
+    queryset = UserCard.objects.all()
+    serializer_class = UserCardSerializer 

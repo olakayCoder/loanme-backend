@@ -34,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG' , default=False)
 
-ALLOWED_HOSTS = ["*"] 
+ALLOWED_HOSTS = ["*","web-production-fd13.up.railway.app"] 
 
 
 # Application definition
@@ -151,7 +151,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY')
-PAYSTACK_SECRET_KEY = env('PAYSTACK_PUBLIC_KEY')
+PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY')
 
 CORS_ALLOW_ALL_ORIGINS = True 
 

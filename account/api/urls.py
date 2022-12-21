@@ -10,7 +10,8 @@ from rest_framework_simplejwt.views import (
 urlpatterns = [ 
     path('', views.AccountApiView.as_view()),
     path('bvn/verification', views.AccountSetupBvnApiView.as_view()),
-    path('debit', views.AddDebitCardApiView.as_view()),
+    path('debit/add', views.AddDebitCardApiView.as_view()),
+    path('bank/add', views.AddUserBankApiView.as_view()),
     path('token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
     path('token/verify', TokenVerifyView.as_view(), name='token_verify'),
     path('password/reset', views.ResetPasswordRequestEmailApiView.as_view(), name='password_reset_request_email'),

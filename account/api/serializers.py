@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from account.models import User
-
+from account.models import User , UserBank , UserCard
+ 
 
 
 
@@ -67,6 +67,53 @@ class AccountSetupBvnSerializer(serializers.Serializer):
 
 
 
+class UserBankSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField('change_created_at_format')
+    updated_at = serializers.SerializerMethodField('change_updated_at_format')
+    class Meta:
+        model = UserBank
+        fields = ['uuid','user','name','code','account_number','account_name','created_at','updated_at']
+
+    def change_updated_at_format(self , obj ):
+        return  obj.updated_at.strftime("%b %d, %Y")
+
+    def change_created_at_format(self , obj ):
+        return  obj.created_at.strftime("%b %d, %Y")
+
+    
+    extra_kwargs = {
+            'uuid':{'read_only' : True},  
+            'user':{'read_only' : True},  
+            'created_at':{'read_only' : True}, 
+            'updated_at':{'read_only' : True}, 
+        }
+
+
+
+class UserCardSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField('change_created_at_format')
+    updated_at = serializers.SerializerMethodField('change_updated_at_format')
+    class Meta:
+        model = UserCard
+        fields = [
+            'uuid','user','code','type','start',
+            'last', 'is_default','account_name',
+            'created_at', 'updated_at'
+        ]
+
+    def change_updated_at_format(self , obj ):
+        return  obj.updated_at.strftime("%b %d, %Y")
+
+    def change_created_at_format(self , obj ):
+        return  obj.created_at.strftime("%b %d, %Y")
+
+    
+    extra_kwargs = {
+            'uuid':{'read_only' : True},  
+            'user':{'read_only' : True},  
+            'created_at':{'read_only' : True}, 
+            'updated_at':{'read_only' : True}, 
+        }
 
 
 

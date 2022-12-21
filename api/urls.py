@@ -1,6 +1,6 @@
 from django.urls import path , include
 from account.api.views import UserSignupApiView , PhoneApiView , PhoneVerifyApiView
-
+from . import views
 
 
 urlpatterns = [ 
@@ -11,5 +11,6 @@ urlpatterns = [
     path('loans/', include('client.api.urls')),  
     path('users', include('client.api.users_urls')),  
     path('admin/', include('client.api.admin.urls')),  
+    path('payment/verify', views.VerifyPaymentApiView.as_view()),    
     # path()
 ]      
