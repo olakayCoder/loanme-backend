@@ -1,0 +1,62 @@
+[
+    {
+        "model":"account.user",
+        "pk": 12,
+        "fields":{
+            "uuid":"3f7005fff2064a69baab220fb4c49b20",
+            "first_name":"Joseph",
+            "last_name":"Afolayan",
+            "middle_name":"Akorede",
+            "date_of_birth":"1989-08-10",
+            "phone":"+2349082566578",
+            "email":"afolayan35@yahoo.com",
+            "gender":"male",
+            "marital":"married",
+            "lga":"Lagos Mainland",
+            "state":"Lagos",
+            "nationality":"Nigeria",
+            "mixing":"0123456789",
+            "reference":"adbe71ae-f6c6-425a-bb78-2c179bb6a18f"
+        }
+    },
+    {
+        "model":"account.user",
+        "pk": 13,
+        "fields":{
+            "uuid":"3f7005fff2064a69baab220fbdsvsy",
+            "first_name":"Chukwumeka",
+            "last_name":"Praise",
+            "middle_name":"Esther",
+            "date_of_birth":"1975-08-10",
+            "phone":"+2347083596178",
+            "email":"afolayan35@yahoo.com",
+            "gender":"female",
+            "marital":"married",
+            "lga":"Kwara East",
+            "state":"Kwara",
+            "nationality":"Nigeria",
+            "mixing":"0859345678",
+            "reference":"adbe71ae-f6c6-425a-bb78-2c177779bb6a18f"
+        }
+    },
+    {
+        "model":"account.user",
+        "pk": 14,
+        "fields": {
+            "uuid":"23980b686af94d91b53baaa9a6ff753d",
+            "first_name":"Demola",
+            "last_name":"Ibrahim",
+            "middle_name":"Sodiq",
+            "date_of_birth":"2000-04-11",
+            "phone":"+2348122441159",
+            "email":"ibrahimdemola@gmail.com",
+            "gender":"male",
+            "marital":"single",
+            "lga":"Shomolu",
+            "state":"Lagos",
+            "nationality":"Nigeria",
+            "mixing":"3456789629",
+            "reference":"1493a07f-77ab-4673-8844-48224d5e5bbd"
+        }
+    }
+]

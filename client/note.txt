@@ -1,0 +1,116 @@
+
+
+
+Name
+Phone number
+Email
+Password
+bvn
+bvn_verified_at
+phone_verified_at
+email_verified_at
+created_at
+updated_at
+
+
+
+BVN TABLE
+
+
+
+
+
+
+
+class LoanApplication(models.Model):
+    uuid = models.CharField(max_length=100 , null=True , blank=True , unique=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    data = models.JSONField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    reason = models.CharField(max_length=20, choices=ModelFieldOptions.LOAN_REASON , default='other')
+    first_name = models.CharField(max_length=100, null=True , blank=True)
+    last_name = models.CharField(max_length=100 , null=True , blank=True) 
+    email = models.EmailField(unique=True)
+    status = models.CharField(max_length=10, choices=ModelFieldOptions.LOAN_APPLICATION_STATUS , default='pending')
+    phone = models.CharField( max_length=20, null=False , blank=False )
+    marital_status = models.CharField(
+        choices=ModelFieldOptions.MARITAL_STATUS , null=True , blank=True, max_length=10,
+        help_text=_('The marital status of the user')
+    )
+    children = models.CharField(max_length=20, choices=ModelFieldOptions.CHILDREN_COUNT ,null=True, blank=True)
+    resident_type = models.CharField(max_length=10, choices=ModelFieldOptions.RESIDENT_TYPE , null=True , blank=True)
+    rent_per_year  = models.DecimalField(
+        null=True, blank=True,
+        decimal_places=2, max_digits=10,
+        help_text=_('This field is required for a rented apartment') 
+    )
+    country = models.CharField(max_length=50, null=True , blank=True)
+    state = models.CharField(max_length=50, null=True, blank=True)
+    city = models.CharField(max_length=50, null=True, blank=True)
+    address = models.TextField(null=True, blank=True) 
+    educational_status = models.CharField(
+        max_length=20, choices=ModelFieldOptions.EDUCATIONAL_STATUS, null=True, blank=True,
+        help_text=_('Educational level of the applicant')
+    )
+    employment_status = models.CharField(
+        max_length=20, choices=ModelFieldOptions.EMPLOYMENT_STATUS, null=True, blank=True,
+        help_text=_('Employment status of the applicant')
+    )
+    business_name = models.CharField(
+        max_length=100, null=True, blank=True,
+        help_text=_('The employer name or business name of the applicant working place')
+    )
+    monthly_income = models.IntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+
+
+
+
+
+
+
+offer_for_user = {
+                'amount': offer_principal ,
+                'interest': offer_interest,
+                'repayment_amount': offer_total_repayment ,
+                'percentage': offer_percentage,
+                'duration' : offer_payment_duration,
+                'due_date' : offer_due_date
+            }\\\
+
+
+print(datetime.now().strftime("%b %d, %Y")) 
+
+
+
+
+
+
+
+{
+  "first_name": "string",
+  "last_name": "string",
+  "email": "user@example.com",
+  "phone": "string",
+  "gender": "female",
+  "date_of_birth": "2022-12-19",
+  "marital_status": "single",
+  "children": "children_one",
+  "education": "olevel",
+  "employment": "employed",
+  "employer": "employed nd",
+  "income": 0,
+  "residence": "string",
+  "years_at_residence": "above_two_year",
+  "rent_per_year": "string",
+  "longitude": 0,
+  "latitude": 0,
+  "bank_name": "string",
+  "account_name": "string",
+  "account_number": "string",
+  "amount": "953200",
+  "reason": "education"
+}
