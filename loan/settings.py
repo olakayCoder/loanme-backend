@@ -15,10 +15,12 @@ from datetime import timedelta
 import os
 
 
-# import environ
+import environ
 
-# env = environ.Env()
-# environ.Env.read_env()
+env = environ.Env()
+environ.Env.read_env()
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -27,12 +29,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^oj49_m@fwiqlfvl#(fu)7=k&(g4y-0f28_hvn8sfuw-h1-9-#'
+SECRET_KEY = env('SECRET_KEY') 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG' , default=False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"] 
 
 
 # Application definition
@@ -137,6 +139,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR , "staticfiles")
 STATIC_URL = "static/"
 STATICFILES_DIRS  =[ BASE_DIR / "static" ]
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL='/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR , 'media')
@@ -147,10 +150,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR , 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-PAYSTACK_SECRET_KEY = 'sk_test_14eca726d98d0f387f1aa6ae9f2e4f17d7c0e5a8'
-# PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY')
-PAYSTACK_SECRET_KEY = 'pk_test_fb18131e05324a325914330258bbf794734b045'
-# PAYSTACK_SECRET_KEY = env('PAYSTACK_PUBLIC_KEY')
+PAYSTACK_SECRET_KEY = env('PAYSTACK_SECRET_KEY')
+PAYSTACK_SECRET_KEY = env('PAYSTACK_PUBLIC_KEY')
 
 CORS_ALLOW_ALL_ORIGINS = True 
 
