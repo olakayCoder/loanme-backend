@@ -63,40 +63,57 @@ class UserSignupApiView(generics.GenericAPIView):
 
     def post(self, request , *args, **kwarg):
         data = request.data
+        print(data)
         serializer = self.serializer_class(data=data)
+        serializer.is_valid(raise_exception=True) 
+        if User.objects.filter(email=data['email']).exists():
+            return Response({
+                'success':False,'detail':'Email already exist'
+                }, status=status.HTTP_400_BAD_REQUEST 
+            )
 
-        if serializer.is_valid(): 
-            phone_verified = Phone.objects.filter(phone=serializer.validated_data['phone'], is_verified=True)
+        
+        # if serializer.is_valid(): 
+        #     phone_verified = Phone.objects.filter(
+        #                 phone=serializer.validated_data['phone'], 
+        #                 is_verified=True
+        #                 )
 
-            if phone_verified:
-                phone_verified = phone_verified.first()
-                phone_verified.delete()
+            # if phone_verified:
+        # phone_verified = phone_verified.first()
+        # phone_verified.delete()
 
-                new_user = User()
-                new_user.first_name = serializer.validated_data['first_name']
-                new_user.last_name = serializer.validated_data['last_name']
-                new_user.email = serializer.validated_data['email']
-                new_user.phone = serializer.validated_data['phone'] 
-                new_user.phone_verified = True
-                new_user.phone_verified_at = datetime.now() 
-                new_user.country = serializer.validated_data['country']
-                new_user.state = serializer.validated_data['state']
-                new_user.city = serializer.validated_data['city']
-                new_user.address = serializer.validated_data['address']
+        new_user = User()
+        new_user.first_name = serializer.validated_data['first_name']
+        new_user.last_name = serializer.validated_data['last_name']
+        new_user.email = serializer.validated_data['email']
+        new_user.phone = serializer.validated_data['phone'] 
+        new_user.phone_verified = True
+        new_user.phone_verified_at = datetime.now() 
+        new_user.country = serializer.validated_data['country']
+        new_user.state = serializer.validated_data['state']
+        new_user.city = serializer.validated_data['city']
+        new_user.address1 = serializer.validated_data['address_1']
+        new_user.address2 = serializer.validated_data['address_2']
 
-                new_user.set_password(str(serializer.validated_data['pin']))
-                try:
-                    tokens = create_jwt_pair_for_user(new_user)
-                    new_user.save()
-                    return Response({
-                        'success':True,
-                        'detail': 'Account created successfully',
-                        'tokens': tokens,
-                        'user': UserSerializer(new_user).data
-                    } , status=status.HTTP_200_OK)
-                except:
-                    return Response({'success':False,'detail': 'Error occurred creating account'} , status=status.HTTP_400_BAD_REQUEST)
-        return Response({'success':False,'detail': 'Error occurred creating account. Try again later'} , status=status.HTTP_400_BAD_REQUEST)
+        new_user.set_password(str(serializer.validated_data['pin']))
+        try:
+            tokens = create_jwt_pair_for_user(new_user)
+            new_user.save()
+            return Response({
+                'success':True,
+                'detail': 'Account created successfully',
+                'tokens': tokens,
+                'user': UserSerializer(new_user).data
+            } , status=status.HTTP_200_OK)
+        except Exception as e:
+            print(e)
+            return Response({
+                'success':False,
+                'detail': 'Error occurred creating account'
+                } , status=status.HTTP_400_BAD_REQUEST
+            )
+        # return Response({'success':False,'detail': 'Error occurred creating account. Try again later'} , status=status.HTTP_400_BAD_REQUEST)
 
 
 

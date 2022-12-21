@@ -77,6 +77,11 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text=_('Flag that determined if the phone number has been verified')
     )
+    is_bvn = models.BooleanField( default=False, )
+    is_card = models.BooleanField( default=False, )
+    is_bank = models.BooleanField( default=False, )
+    is_bvn_verified = models.BooleanField( default=False, )
+
     phone_verified_at = models.DateTimeField(
         null=True, blank=True,
         help_text=_('The date phone number was verified')
@@ -100,7 +105,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     country = models.CharField(max_length=50, null=True , blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True, blank=True)
-    address = models.TextField(null=True, blank=True) 
+    address1 = models.TextField(null=True, blank=True) 
+    address2 = models.TextField(null=True, blank=True) 
     lga = models.CharField(
         max_length=100, null=True, blank=True,
         help_text=_('Local government area of the user location')
