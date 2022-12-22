@@ -5,8 +5,8 @@ from django.contrib.auth.models import Group , Permission
 # Create your models here.
 from uuid import uuid4 
 from helpers.options import ModelFieldOptions
-
-
+# from client.models import Loan , LoanRepayment
+from django.db.models import Sum , F  
 
 def upload_to(instance, filename):
     return 'profiles/{filename}'.format(filename=filename)
@@ -138,6 +138,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self) -> str:
         return self.email
 
+    
+
+        
+
 
     @classmethod
     def check_email(cls, email:str):
@@ -226,6 +230,13 @@ class UserCard(models.Model):
         null=True , blank=True,
         help_text=_('First six digit of the card')
     )
+
+    exp_month = models.IntegerField(null=True, blank=True)
+    exp_year = models.IntegerField(null=True, blank=True)
+    bank = models.CharField(max_length=200,null=True, blank=True) 
+    signature = models.CharField(max_length=200, null=True)
+
+
     account_name = models.CharField(max_length=200, null=True)
     email = models.EmailField( null=True , blank=True)
     is_default = models.BooleanField(default=False)

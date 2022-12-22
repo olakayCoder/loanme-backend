@@ -21,9 +21,9 @@ class CustomUserAdminConfig(UserAdmin):
     fieldsets = (
         (None, {'fields': (
            'uuid','first_name','last_name','email','email_verified','email_verified_at',
-            'image','is_admin','deleted_at',  'date_of_birth','phone','phone_verified','phone_verified_at','verification_completed',
+            'image','is_admin', 'is_bvn' , 'is_card', 'is_bank', 'is_bvn_verified' ,'deleted_at',  'date_of_birth','phone','phone_verified','phone_verified_at','verification_completed',
             'marital_status','children','resident_type','rent_per_year','country','state','city',
-            'address','lga', 'educational_status','employment_status', 'business_name' , 'monthly_income'
+            'address1','lga', 'educational_status','employment_status', 'business_name' , 'monthly_income'
             
         )}),   
          

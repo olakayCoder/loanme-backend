@@ -19,6 +19,11 @@ class ScoreCriteriaCategory(models.Model):
 
 
 
+    def __str__(self) -> str:
+        return self.name  
+
+
+
 
 
 
@@ -30,9 +35,16 @@ class ScoreCriteriaOption(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self) -> str: 
+        return f'{self.category.name} ---> {self.name}  '
 
 
-
+    @classmethod
+    def get_total_points(cls):
+        result  = cls.objects.annotate(
+                            sum=F('points')).aggregate(total_sum= Sum('sum')
+                        )
+        return result['total_sum']
 
 def is_percentage(value):
     if not isinstance(value, int):
@@ -40,6 +52,9 @@ def is_percentage(value):
     if value > 100:
         return False
     return True
+
+
+
 
 
 class Offer(models.Model):

@@ -18,17 +18,17 @@ class LoanRequestSerializer(serializers.Serializer):
     employment = serializers.CharField(allow_blank=False)
     employer = serializers.CharField(allow_blank=False)
     income = serializers.IntegerField()
+    years_at_work = serializers.IntegerField()
 
     residence = serializers.CharField(allow_blank=False)
     years_at_residence = serializers.CharField(allow_blank=False)
     rent_per_year = serializers.CharField()
 
-    longitude = serializers.FloatField()
-    latitude = serializers.FloatField()
-
-    bank_name = serializers.CharField(allow_blank=False)
-    account_name = serializers.CharField(allow_blank=False)
-    account_number = serializers.CharField(allow_blank=False)
+    # longitude = serializers.FloatField()
+    # latitude = serializers.FloatField()
+    # bank_name = serializers.CharField(allow_blank=False)
+    # account_name = serializers.CharField(allow_blank=False)
+    # account_number = serializers.CharField(allow_blank=False)
 
 
     amount = serializers.DecimalField(max_digits=20, decimal_places=2)

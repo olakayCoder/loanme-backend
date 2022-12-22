@@ -3,12 +3,14 @@ from rest_framework.response import Response
 from rest_framework.permissions import (
     IsAuthenticated,IsAdminUser
 )
+from dateutil.relativedelta import relativedelta
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework.decorators import permission_classes
 from django.forms.models import model_to_dict
 from client.models import (
     LoanApplication , Loan  , ScoreCriteriaOption , Offer , LoanOffer , LoanSchedule , LoanRepayment , LoanScoreBoard
 )
+from django.db.models import Sum , F  
 from .serializers import (
     LoanRequestSerializer, LoanSerializer , LoanOfferSerializer,
     LoanOfferAcceptSerializer , LoanApplicationSerializer ,LoanScheduleSerializer,
@@ -34,7 +36,7 @@ from django.utils import timezone
 
 class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
     serializer_class = LoanRequestSerializer  
-    # permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]  
     queryset = Loan.objects.all()
 
     @swagger_auto_schema(
@@ -73,54 +75,65 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         """
         score = 0
         data = request.data
-        # user = User.objects.get(id=request.user.id)
-        user = User.objects.get(id=1)
+        user = User.objects.get(id=request.user.id)
+        # print(data)  
+        # user = User.objects.get(id=1)
         if Loan.objects.filter(user=user, status='active').exists():
             return Response({'success':False, 'detail':'You have an active loan'}, status=status.HTTP_400_BAD_REQUEST)
         app = LoanApplication.objects.create(user=user, data=json.dumps(data))
+
         # personal info response
         marital_status = data['marital_status']
         children = data['children']
         gender = data['gender']
         personal_score_option = ScoreCriteriaOption.objects.filter(category__name='Personal info')
+        # print(ScoreCriteriaOption.get_total_points())
         for val in personal_score_option:
-            if marital_status.lower() == val.name.lower():
+            if marital_status == val.name:
                 score += val.points
-            if children.lower() == val.name.lower():
+            if children == val.name:
                 score += val.points
-            if gender.lower() == val.name.lower():
+            if gender == val.name:
                 score += val.points
         # education and employment response
         level_of_education = data['education']
         employment = data[ 'employment']
         educational_employment = ScoreCriteriaOption.objects.filter(category__name='Education and employment')
         for val in educational_employment:
-            # print(val.name)
-            if level_of_education.lower() == val.name.lower():
+            if level_of_education == val.name:
                 score += val.points
-            if employment.lower() == val.name.lower():
+            if employment == val.name:
                 score += val.points
+
+        # WORK
+        work_duration = data['years_at_work']
+        work_options = ScoreCriteriaOption.objects.filter(category__name='Work')
+        for val in work_options:
+            if work_duration == val.name:
+                print(work_duration) 
+                score += val.points
+
         # residence
         residence = data['residence']
         year_at_residence = data['years_at_residence']
         residence_option_score = ScoreCriteriaOption.objects.filter(category__name='Residence')
         for val in residence_option_score:
-            if residence.lower() == val.name.lower():
+            if residence == val.name:
                 score += val.points
-            if year_at_residence.lower() == val.name.lower():
+            if year_at_residence == val.name:
                 score += val.points
         # loan reason
         loan_reason = data['reason']
         loan_reason_option_score = ScoreCriteriaOption.objects.filter(category__name='Loan Reason')
         for val in loan_reason_option_score:
-            if loan_reason.lower() == val.name.lower():
+            if loan_reason == val.name:
                 score += val.points
-        f = ['performing', 'non_performing']
+        f = ['Performing', 'Non performing']
         crc = f[0] 
-        # crc = random.choice(f)
+        crc = random.choice(f)
         loan_reason_option_score = ScoreCriteriaOption.objects.filter(category__name='CRC')
         for val in loan_reason_option_score:
-            if crc.lower() == val.name.lower():
+            if crc == val.name: 
                 score += val.points
         amount_requested = int(data['amount'])
         #  checking the amount eligibility of the user using the score
@@ -134,9 +147,12 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             eligible_amount = (amount_requested) * 0.00
             return Response({'detail':'Not eligible for loan'}, status=status.HTTP_200_OK)
         # calculating loan offer for the user to generate loan offer
-        loan_offers_list = [] 
+        # print(score)  
+        # print(crc)
+        # loan_offers_list = [] 
         offers = Offer.objects.filter(type='month')
         for offer in offers:
+            print(offer)
             offer_amount = eligible_amount
             offer_interest = round( float(eligible_amount * (offer.percentage / 100)) , 2 )
             offer_total_repayment =  round( float(eligible_amount + (eligible_amount * (offer.percentage / 100))) , 2)
@@ -144,10 +160,11 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             offer_payment_duration = offer.count
             offer_percentage = offer.percentage 
             # !!! todo , change weeks to month using the  from dateutil.relativedelta import relativedelta
-            offer_due_date =  (
-                (datetime.now()  +  timedelta(weeks=offer_payment_duration)).strftime("%b %d, %Y")
-                )
-            offer_due_date = timezone.now()  +  timedelta(weeks=offer_payment_duration) 
+            # offer_due_date =  (
+            #     (datetime.now()  +  timedelta(weeks=offer_payment_duration)).strftime("%b %d, %Y")
+            #     ) 
+            offer_due_date = timezone.now()  +  relativedelta(months=offer_payment_duration)
+            # (weeks=offer_payment_duration) 
             offer_for_user = LoanOffer.objects.create(
                 application=app, 
                 period=offer_payment_duration ,
@@ -159,10 +176,14 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
                 total_repayment = offer_total_repayment ,
                 offer_amount=offer_amount,   
             )
-        m = LoanOffer.objects.filter(user=user)
-        serializer = LoanOfferSerializer(m , many=True ) 
+            print(offer_amount) 
+        m = LoanOffer.objects.filter(user=user, application=app)
+        for n in m:
+            print(n) 
+        serializer = LoanOfferSerializer(m , many=True )  
         LoanApplicationScore.score_application(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
+        # return Response({'h':'kk'}, status=status.HTTP_201_CREATED)
 
 
 
@@ -185,6 +206,7 @@ class LoanRetrieveRequestApiView(generics.GenericAPIView):
 
 class OfferReceiveApproved(generics.GenericAPIView):
     serializer_class = LoanOfferAcceptSerializer
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description='''
@@ -193,8 +215,8 @@ class OfferReceiveApproved(generics.GenericAPIView):
         operation_summary='Accept a loan offer'
     )
     def post(self, request , *args, **kwargs ):
-        # user = User.objects.get(id=request.user.id)
-        user = User.objects.get(id=1) 
+        user = User.objects.get(id=request.user.id) 
+        # user = User.objects.get(id=1) 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
@@ -212,7 +234,7 @@ class OfferReceiveApproved(generics.GenericAPIView):
         ) 
         for period in range(1 , offer.period + 1 ):
             # !!! todo , change weeks to month using the  from dateutil.relativedelta import relativedelta
-            date = timezone.now()  +  timedelta(weeks=period)
+            date = timezone.now()  +  relativedelta(weeks=period) 
             LoanSchedule.objects.create(
                 user=user, amount=amount_junk, 
                 loan=loan , offer=offer , date=date 
@@ -318,8 +340,82 @@ class CustomersListApiView(generics.ListAPIView):
 class UserBankListApiView(generics.ListAPIView):
     queryset = UserBank.objects.all()
     serializer_class = UserBankSerializer 
+    permission_classes = [IsAuthenticated]
+
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        bank = UserBank.objects.filter(user=user)
+        serializer = self.serializer_class(bank, many=True).data
+        return Response(serializer , status=status.HTTP_200_OK)
 
 
 class UserCardListApiView(generics.ListAPIView):
     queryset = UserCard.objects.all()
-    serializer_class = UserCardSerializer 
+    serializer_class = UserCardSerializer
+    permission_classes = [IsAuthenticated]  
+
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        card = UserCard.objects.filter(user=user)
+        serializer = self.serializer_class(card , many=True).data
+        return Response(serializer , status=status.HTTP_200_OK)
+
+
+
+
+
+class UserLoansApiView(generics.ListAPIView):
+    queryset = Loan.objects.all() 
+    serializer_class = LoanSerializer 
+    permission_classes = [IsAuthenticated]  
+
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        card = Loan.objects.filter(user=user)  
+        serializer = self.serializer_class(card , many=True).data
+        return Response(serializer , status=status.HTTP_200_OK)
+
+
+
+class UserLoanRemainingApiView(generics.ListAPIView):
+    queryset = Loan.objects.all()
+    serializer_class = UserCardSerializer
+    permission_classes = [IsAuthenticated]  
+
+    def get(self, request, *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        # getting all loan sum
+        all_loan_sum = 0
+        sum = Loan.objects.filter(user=user).annotate(
+            total=Sum(F('amount'))
+            ).aggregate(total_price = Sum('total')) 
+        all_loan_sum =  0 if sum['total_price'] == None else sum['total_price']
+        paid_loan  = 0
+        # getting total paid loan for user 
+        for model in Loan.objects.filter(user=user):
+            repayments = LoanRepayment.objects.filter(
+                        loan=model, payment_status='paid').annotate(
+                            sum=F('amount')).aggregate(total_sum= Sum('sum')
+                        )
+            paid_loan += repayments['total_sum']   
+        
+        loan_debt = all_loan_sum - paid_loan 
+        
+        response = {
+            'success': True,
+            'detail':'Loan debt retrieve',
+            'debt':loan_debt
+        }
+        if loan_debt == 0 :
+            response.update({
+                'hasActiveLoan':False
+            })
+        else:
+            response.update({
+                'hasActiveLoan':True
+            })
+        return Response(response, status=status.HTTP_200_OK)
+

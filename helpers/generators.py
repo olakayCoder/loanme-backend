@@ -99,50 +99,60 @@ class CustomValuesGenerator:
         """
         # Personal info
         personal = ScoreCriteriaCategory.objects.create(name='Personal info')
-        male = ScoreCriteriaOption.objects.create(category=personal, name='male' , points=5)
-        female = ScoreCriteriaOption.objects.create(category=personal, name='female' , points=3)
-        children_one = ScoreCriteriaOption.objects.create(category=personal, name='children_one' , points=10 )
-        children_two = ScoreCriteriaOption.objects.create(category=personal, name='children_two' , points=6 )
-        children_other = ScoreCriteriaOption.objects.create(category=personal, name='children_other' , points=3 )
-        married = ScoreCriteriaOption.objects.create(category=personal, name='married' , points=10)
-        single = ScoreCriteriaOption.objects.create(category=personal, name='single' , points=5)
-        divorce = ScoreCriteriaOption.objects.create(category=personal, name='divorce' , points=7)
+        male = ScoreCriteriaOption.objects.create(category=personal, name='Male' , points=5)
+        female = ScoreCriteriaOption.objects.create(category=personal, name='Female' , points=3)
+        children_one = ScoreCriteriaOption.objects.create(category=personal, name='1 child' , points=10 )
+        children_two = ScoreCriteriaOption.objects.create(category=personal, name='2 children' , points=6 )
+        children_other = ScoreCriteriaOption.objects.create(category=personal, name='Above 2' , points=2 )
+        married = ScoreCriteriaOption.objects.create(category=personal, name='Married' , points=10)
+        single = ScoreCriteriaOption.objects.create(category=personal, name='Single' , points=5)
+        divorce = ScoreCriteriaOption.objects.create(category=personal, name='Divorce' , points=7)
 
         # Education and employment
         edu_and_employ = ScoreCriteriaCategory.objects.create(name='Education and employment')
-        undergraduate = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='undergraduate' , points=6)
-        graduate = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='graduate' , points=8)
-        olevel = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='olevel' , points=4)
-        technical = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='technical' , points=8)
-        unemployed = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='unemployed' , points=5)
-        employed = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='employed' , points=10)
-        entrepreneur = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='entrepreneur' , points=10)
+        undergraduate = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Undergraduate' , points=5)
+        graduate = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Graduate' , points=10)
+        olevel = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Olevel' , points=3)
+        technical = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Technical' , points=8)
+        unemployed = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Unemployed' , points=5)
+        employed = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Employed' , points=10)
+        entrepreneur = ScoreCriteriaOption.objects.create(category=edu_and_employ , name='Entrepreneur' , points=8)
+
+
+
+        # years at work
+        work = ScoreCriteriaCategory.objects.create(name='Work')
+        less_than_six_month = ScoreCriteriaOption.objects.create(category=work , name='Less than 6 months' , points=0)
+        less_than_six_month = ScoreCriteriaOption.objects.create(category=work , name='6 months' , points=1)
+        one_year = ScoreCriteriaOption.objects.create(category=work , name='1 year' , points=2)
+        two_year = ScoreCriteriaOption.objects.create(category=work , name='2 years' , points=3)
+        above_two_year = ScoreCriteriaOption.objects.create(category=work , name='Above 2 years' , points=5 ) 
 
         #  type of residence
         residence = ScoreCriteriaCategory.objects.create(name='Residence')
-        owned = ScoreCriteriaOption.objects.create(category=residence , name='owned' , points=10)
-        rented = ScoreCriteriaOption.objects.create(category=residence , name='rented' , points=5)
-        less_than_six_month = ScoreCriteriaOption.objects.create(category=residence , name='less_than_six_month' , points=5)
-        one_year = ScoreCriteriaOption.objects.create(category=residence , name='one_year' , points=7)
-        two_year = ScoreCriteriaOption.objects.create(category=residence , name='two_year' , points=8)
-        above_two_year = ScoreCriteriaOption.objects.create(category=residence , name='above_two_year' , points=10 )
+        owned = ScoreCriteriaOption.objects.create(category=residence , name='Owned' , points=10)
+        rented = ScoreCriteriaOption.objects.create(category=residence , name='Rented' , points=5)
+        less_than_six_month = ScoreCriteriaOption.objects.create(category=residence , name='6 months' , points=5)
+        one_year = ScoreCriteriaOption.objects.create(category=residence , name='1 year' , points=7)
+        two_year = ScoreCriteriaOption.objects.create(category=residence , name='2 years' , points=8)
+        above_two_year = ScoreCriteriaOption.objects.create(category=residence , name='Above 2 years' , points=10 )
 
         # loan reason
         loan_reason = ScoreCriteriaCategory.objects.create(name='Loan Reason')
-        education = ScoreCriteriaOption.objects.create(category=loan_reason , name='education' , points=5)
-        medical = ScoreCriteriaOption.objects.create(category=loan_reason , name='medical' , points=4)
-        rent = ScoreCriteriaOption.objects.create(category=loan_reason , name='rent' , points=5)
-        travel = ScoreCriteriaOption.objects.create(category=loan_reason , name='travel' , points=4)
-        business = ScoreCriteriaOption.objects.create(category=loan_reason , name='business' , points=10)
-        goods = ScoreCriteriaOption.objects.create(category=loan_reason , name='goods' , points=10)
+        education = ScoreCriteriaOption.objects.create(category=loan_reason , name='Education' , points=5)
+        medical = ScoreCriteriaOption.objects.create(category=loan_reason , name='Medical' , points=4)
+        rent = ScoreCriteriaOption.objects.create(category=loan_reason , name='Rent' , points=5)
+        travel = ScoreCriteriaOption.objects.create(category=loan_reason , name='Travel' , points=4)
+        business = ScoreCriteriaOption.objects.create(category=loan_reason , name='Business' , points=10)
+        goods = ScoreCriteriaOption.objects.create(category=loan_reason , name='Goods' , points=10)
         event = ScoreCriteriaOption.objects.create(category=loan_reason , name='event' , points=7)
-        household = ScoreCriteriaOption.objects.create(category=loan_reason , name='household' , points=6)
-        other_reason = ScoreCriteriaOption.objects.create(category=loan_reason , name='other_reason' , points=5)
+        household = ScoreCriteriaOption.objects.create(category=loan_reason , name='Household' , points=6)
+        other_reason = ScoreCriteriaOption.objects.create(category=loan_reason , name='Other' , points=2)
 
         # crc
         crc = ScoreCriteriaCategory.objects.create(name='CRC')
-        education = ScoreCriteriaOption.objects.create(category=crc , name='performing' , points=20)
-        medical = ScoreCriteriaOption.objects.create(category=crc , name='non_performing' , points=0)
+        education = ScoreCriteriaOption.objects.create(category=crc , name='Performing' , points=20)
+        medical = ScoreCriteriaOption.objects.create(category=crc , name='Non performing' , points=1)
         
 
 

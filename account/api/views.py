@@ -10,6 +10,8 @@ from .serializers import (
     UserSerializer , AccountSetupBvnSerializer , ResetPasswordRequestEmailSerializer,
     ChangePasswordSerializer , SetNewPasswordSerializer , LoginSerializer ,
 )
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 from helpers.utils import INVALID_CODES , create_jwt_pair_for_user
 from helpers.options import ModelFieldOptions
 from helpers.mailing import MailServices
@@ -21,7 +23,7 @@ from drf_yasg.utils import swagger_auto_schema
 from client.models import Transaction
 from django.contrib.auth import authenticate
 from uuid import uuid4
-
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.exceptions import PermissionDenied , NotAuthenticated
 from django.conf import settings
 from django.forms import model_to_dict
@@ -63,7 +65,6 @@ class UserSignupApiView(generics.GenericAPIView):
 
     def post(self, request , *args, **kwarg):
         data = request.data
-        print(data)
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True) 
         if User.objects.filter(email=data['email']).exists():
@@ -71,17 +72,6 @@ class UserSignupApiView(generics.GenericAPIView):
                 'success':False,'detail':'Email already exist'
                 }, status=status.HTTP_400_BAD_REQUEST 
             )
-
-        
-        # if serializer.is_valid(): 
-        #     phone_verified = Phone.objects.filter(
-        #                 phone=serializer.validated_data['phone'], 
-        #                 is_verified=True
-        #                 )
-
-            # if phone_verified:
-        # phone_verified = phone_verified.first()
-        # phone_verified.delete()
 
         new_user = User()
         new_user.first_name = serializer.validated_data['first_name']
@@ -98,8 +88,8 @@ class UserSignupApiView(generics.GenericAPIView):
 
         new_user.set_password(str(serializer.validated_data['pin']))
         try:
-            tokens = create_jwt_pair_for_user(new_user)
             new_user.save()
+            tokens = create_jwt_pair_for_user(new_user) 
             return Response({
                 'success':True,
                 'detail': 'Account created successfully',
@@ -108,6 +98,7 @@ class UserSignupApiView(generics.GenericAPIView):
             } , status=status.HTTP_200_OK)
         except Exception as e:
             print(e)
+            new_user.delete() 
             return Response({
                 'success':False,
                 'detail': 'Error occurred creating account'
@@ -115,6 +106,58 @@ class UserSignupApiView(generics.GenericAPIView):
             )
         # return Response({'success':False,'detail': 'Error occurred creating account. Try again later'} , status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+
+
+class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        cus = UserSerializer(user).data  
+        # Add custom claims
+        token['data'] = cus
+        # ...
+
+        return token
+
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
+
+class CustomTokenObtain(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    pass
+
+    def post(self, request ):
+        data = request.data
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = authenticate(email = data['email'], password =  data['password'])
+        mail = User.check_email(data['email'])
+        if user is not None :
+            if user.is_active:
+                serializer = UserSerializer(user)
+                tokens = create_jwt_pair_for_user(user)
+                r = self.serializer_class().get_token(user)
+                response = {
+                    'success': True ,
+                    'message': 'Login is successful',
+                    "data" : r , 
+                    # 'user' : serializer.data 
+                }
+                return Response(response , status=status.HTTP_200_OK)
+            else:
+                raise PermissionDenied(
+                    "Your account is disabled, kindly contact the administrative")
+        if mail:
+            raise PermissionDenied(
+                    "Your account is disabled, kindly contact the administrative")
+        return Response({'success': False , 'message': 'Invalid login credential'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class AccountSetupBvnApiView(generics.GenericAPIView):
@@ -146,9 +189,10 @@ class AccountSetupBvnApiView(generics.GenericAPIView):
 
 class AddDebitCardApiView(generics.GenericAPIView):
     serializer_class = AccountSetupBvnSerializer
+    permission_classes = [ IsAuthenticated]
   
     def get(self, request, *args, **kwargs):
-        user = User.objects.get(id=1)
+        user = User.objects.get(id=request.user.id) 
         paystack_public = settings.PAYSTACK_PUBLIC_KEY 
         uuidb64 = urlsafe_base64_encode(force_bytes(user.id))
         reference = f'ref_{uuidb64}_{uuid4().hex}' 
@@ -156,7 +200,6 @@ class AddDebitCardApiView(generics.GenericAPIView):
             user=user, type='card', amount='50', 
             reference=reference 
         )
-        m = model_to_dict(transaction)
         response = {
             'paystack_public':paystack_public,
             'email': user.email, 
@@ -167,9 +210,10 @@ class AddDebitCardApiView(generics.GenericAPIView):
 # UserBankSerializer
 class AddUserBankApiView(generics.GenericAPIView):
     serializer_class = UserBankSerializer
+    permission_classes = [ IsAuthenticated]
   
     def post(self, request, *args, **kwargs):
-        user = User.objects.get(id=1)
+        user = User.objects.get(id=request.user.id) 
         data = request.data
         bank = UserBank.objects.create(
             user=user,
@@ -181,7 +225,9 @@ class AddUserBankApiView(generics.GenericAPIView):
         response = {
             'success':True,
             'detail': 'Account added successfully',
-        }
+        }  
+        user.is_bank=True
+        user.save()
         return Response( response , status=status.HTTP_201_CREATED )
 
 
@@ -206,30 +252,28 @@ class LoginApiView(generics.GenericAPIView):
     )
     def post(self, request ):
         data = request.data
-        serializer = self.serializer_class(data=data)
-        if serializer.is_valid(raise_exception=True): 
-            email = serializer.validated_data['email'] 
-            password = serializer.validated_data['password']
-            user = authenticate(email=email , password=password)
-            mail = User.check_email(email)
-            if user is not None :
-                if user.is_active:
-                    serializer = UserSerializer(user)
-                    tokens = create_jwt_pair_for_user(user)
-                    response = {
-                        'success': True ,
-                        'message': 'Login is successful',
-                        "tokens" : tokens , 
-                        'user' : serializer.data 
-                    }
-                    return Response(response , status=status.HTTP_200_OK)
-                else:
-                    raise PermissionDenied(
-                        "Your account is disabled, kindly contact the administrative")
-            if mail:
+        email = data['email']  
+        password = data['password']
+        user = authenticate(email=email , password=password)
+        mail = User.check_email(email)
+        if user is not None :
+            if user.is_active:
+                serializer = UserSerializer(user)
+                tokens = create_jwt_pair_for_user(user)
+                response = {
+                    'success': True ,
+                    'message': 'Login is successful',
+                    "tokens" : tokens , 
+                    'user' : serializer.data 
+                }
+                return Response(response , status=status.HTTP_200_OK)
+            else:
                 raise PermissionDenied(
+                    "Your account is disabled, kindly contact the administrative")
+        if mail:
+            raise PermissionDenied(
                         "Your account is disabled, kindly contact the administrative")
-            return Response({'success': False , 'message': 'Invalid login credential'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'success': False , 'message': 'Invalid login credential'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
