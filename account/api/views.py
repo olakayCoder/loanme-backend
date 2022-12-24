@@ -205,6 +205,8 @@ class AddDebitCardApiView(generics.GenericAPIView):
             'email': user.email, 
             'reference': reference ,
         }
+        user.is_card = True
+        user.save()
         return Response( response , status=status.HTTP_200_OK)
 
 # UserBankSerializer
@@ -227,7 +229,10 @@ class AddUserBankApiView(generics.GenericAPIView):
             'detail': 'Account added successfully',
         }  
         user.is_bank=True
+        if user.is_card :
+            user.verification_completed = True
         user.save()
+        time.sleep(3)
         return Response( response , status=status.HTTP_201_CREATED )
 
 
@@ -267,6 +272,45 @@ class LoginApiView(generics.GenericAPIView):
                     'user' : serializer.data 
                 }
                 return Response(response , status=status.HTTP_200_OK)
+            else:
+                raise PermissionDenied(
+                    "Your account is disabled, kindly contact the administrative")
+        if mail:
+            return Response({'success': False , 'detail': "Your account is disabled, kindly contact the administrative"}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'success': False , 'detail': 'Invalid login credential'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+class AdminLoginApiView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+  
+    @swagger_auto_schema(
+        operation_description='Authenticate admin',
+        operation_summary='Authenticate admin'
+    )
+    def post(self, request ):
+        data = request.data
+        email = data['email']  
+        password = data['password']
+        user = authenticate(email=email , password=password)
+        mail = User.check_email(email)
+        if user is not None :
+            if user.is_active:
+                if user.is_staff:
+                    serializer = UserSerializer(user)
+                    tokens = create_jwt_pair_for_user(user)
+                    response = {
+                        'success': True ,
+                        'message': 'Login is successful',
+                        "tokens" : tokens , 
+                        'user' : serializer.data 
+                    }
+                    return Response(response , status=status.HTTP_200_OK)
+                else:
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 raise PermissionDenied(
                     "Your account is disabled, kindly contact the administrative")
@@ -381,11 +425,10 @@ class ChangePasswordView(generics.GenericAPIView):
 
 class AccountApiView(generics.GenericAPIView):
     serializer_class = UserSerializer
-
+    permission_classes = [ IsAuthenticated]
 
 
     def get(self,request, *args,**kwargs):
-        CustomValuesGenerator.random_bvn() 
-        user = User.objects.get(id=1) 
+        user = User.objects.get(id=request.user.id)    
         serializer = self.serializer_class(user)
         return Response(serializer.data, status.HTTP_200_OK) 

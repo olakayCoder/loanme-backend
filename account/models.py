@@ -42,6 +42,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     """
     !!! ACCOUNT PIN IS THE PASSWORD
     """
+    GENDER_STATUS= (
+        ('male','Male'),
+        ('female','Female')
+    )
     uuid = models.CharField(max_length=100 , null=True , blank=True , unique=True)
     first_name = models.CharField(max_length=100, null=True , blank=True)
     last_name = models.CharField(max_length=100 , null=True , blank=True) 
@@ -73,6 +77,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_('Flag that determined if the user has completed all necessary verifications')
     )
     phone = models.CharField( max_length=20, null=False , blank=False )
+    years_at_residence = models.CharField( max_length=20, null=False , blank=False )
     phone_verified = models.BooleanField(
         default=False,
         help_text=_('Flag that determined if the phone number has been verified')
@@ -91,7 +96,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         help_text=_('The marital status of the user')
     )
 
-    children = models.CharField(max_length=20, choices=ModelFieldOptions.CHILDREN_COUNT ,null=True, blank=True)
+    children = models.CharField(max_length=20,null=True, blank=True)
     resident_type = models.CharField(max_length=10, choices=ModelFieldOptions.RESIDENT_TYPE , null=True , blank=True)
     rent_per_year  = models.DecimalField(
         null=True, blank=True,
@@ -105,6 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     country = models.CharField(max_length=50, null=True , blank=True)
     state = models.CharField(max_length=50, null=True, blank=True)
     city = models.CharField(max_length=50, null=True, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_STATUS , null=True, blank=True)
     address1 = models.TextField(null=True, blank=True) 
     address2 = models.TextField(null=True, blank=True) 
     lga = models.CharField(
@@ -116,11 +122,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     The field that is related to the user educational and employment detail  starts
     """
     educational_status = models.CharField(
-        max_length=20, choices=ModelFieldOptions.EDUCATIONAL_STATUS, null=True, blank=True,
+        max_length=20, null=True, blank=True,
         help_text=_('Educational level of the user')
     )
     employment_status = models.CharField(
-        max_length=20, choices=ModelFieldOptions.EMPLOYMENT_STATUS, null=True, blank=True,
+        max_length=20,  null=True, blank=True,
         help_text=_('Employment status of the user')
     )
     business_name = models.CharField(
@@ -250,3 +256,9 @@ class Phone(models.Model):
     phone = models.CharField( max_length=20, null=False , blank=False )
     is_verified = models.BooleanField( default=False )
     created_at = models.DateTimeField(auto_now_add=True)  
+
+
+
+
+
+

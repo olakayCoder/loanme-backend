@@ -53,7 +53,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [   
             'uuid','first_name','last_name','email','email_verified','email_verified_at',
-            'image','is_active','is_staff','is_admin','created_at','updated_at','deleted_at',
+            'image','gender','is_active','is_staff','is_admin','created_at','updated_at','deleted_at',
             'date_of_birth','phone','phone_verified','phone_verified_at','verification_completed',
             'marital_status','children','resident_type','rent_per_year','country','state','city', 'is_card','is_bvn','is_bank',
             'address1', 'address2','lga', 'educational_status','employment_status', 'business_name' , 'monthly_income'

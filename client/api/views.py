@@ -32,7 +32,7 @@ from django.utils import timezone
 # t = datetime.now()
 # next_week = timedelta(weeks=1)
 # n = t + next_week
-
+import time
 
 class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
     serializer_class = LoanRequestSerializer  
@@ -79,7 +79,11 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         # print(data)  
         # user = User.objects.get(id=1)
         if Loan.objects.filter(user=user, status='active').exists():
-            return Response({'success':False, 'detail':'You have an active loan'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'success':False, 
+                'detail':'You have an active loan. Kindly repay so have access to loan'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
         app = LoanApplication.objects.create(user=user, data=json.dumps(data))
 
         # personal info response
@@ -129,7 +133,7 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             if loan_reason == val.name:
                 score += val.points
         f = ['Performing', 'Non performing']
-        crc = f[0] 
+        # crc = f[1] 
         crc = random.choice(f)
         loan_reason_option_score = ScoreCriteriaOption.objects.filter(category__name='CRC')
         for val in loan_reason_option_score:
@@ -145,7 +149,7 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             eligible_amount = (amount_requested) * 0.50 
         if score < 50:
             eligible_amount = (amount_requested) * 0.00
-            return Response({'detail':'Not eligible for loan'}, status=status.HTTP_200_OK)
+            return Response({'detail':'Not eligible for loan'}, status=status.HTTP_400k)
         # calculating loan offer for the user to generate loan offer
         # print(score)  
         # print(crc)
@@ -178,8 +182,7 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             )
             print(offer_amount) 
         m = LoanOffer.objects.filter(user=user, application=app)
-        for n in m:
-            print(n) 
+        time.sleep(4) 
         serializer = LoanOfferSerializer(m , many=True )  
         LoanApplicationScore.score_application(data)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -189,7 +192,7 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
 
 class LoanRetrieveRequestApiView(generics.GenericAPIView):
     serializer_class = LoanSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @swagger_auto_schema(
         operation_description='''
@@ -198,10 +201,76 @@ class LoanRetrieveRequestApiView(generics.GenericAPIView):
         operation_summary='Get customer loan detail'
     )
     def get(self, request, uuid , *args, **kwargs):
-        user = User.objects.get(id=1)  
-        loan = Loan.objects.get(user=user)
+        user = User.objects.get(id=request.user.id)
+        try:
+            loan = Loan.objects.get(uuid=uuid)
+        except:
+            return Response({ 
+                'success':False,
+                'detail':"Loan does not exist"
+            },status=status.HTTP_404_NOT_FOUND)
         serializer = self.serializer_class(loan)        
         return Response(serializer.data , status=status.HTTP_200_OK) 
+
+
+
+
+class LoanPaymentApiView(generics.GenericAPIView):
+    serializer_class = LoanSerializer
+    permission_classes = [IsAuthenticated]
+
+    @swagger_auto_schema(
+        operation_description='''
+        Pay loan
+        ''',
+    )
+    def post(self, request, uuid , *args, **kwargs):
+        user = User.objects.get(id=request.user.id)
+        try:
+            loan = Loan.objects.get(uuid=uuid)
+        except:
+            return Response({   'success':False, 'detail':"Loan does not exist" },status=status.HTTP_404_NOT_FOUND)
+        sche = LoanSchedule.objects.filter(loan=loan) 
+        owe = loan.owing_loan() 
+        selected_type = request.data['type']
+        if selected_type == 'full':
+            loan.status = 'completed'
+            LoanRepayment.objects.create(
+                payment_type='custom',
+                amount=owe,
+                payment_status='paid',
+                user=user,
+                loan=loan
+            )
+            loan.save()
+            for model in sche:
+                model.status = 'completed'
+                model.save() 
+            return Response({
+                'success':True,
+                'detail':'Repayment successful'
+            }, status=status.HTTP_200_OK)
+        
+        if selected_type == 'next':
+            next = sche.filter(status='pending').first()
+            next.status = 'completed'
+            LoanRepayment.objects.create(
+                payment_type='custom',
+                amount=next.amount,
+                payment_status='paid',
+                user=user,
+                loan=loan
+            )
+            next.save()
+            return Response({
+                'success':True,
+                'detail':'Repayment successful'
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+                'success':False,
+                'detail':'Repayment type is invalid'
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class OfferReceiveApproved(generics.GenericAPIView):
@@ -214,7 +283,7 @@ class OfferReceiveApproved(generics.GenericAPIView):
         ''',
         operation_summary='Accept a loan offer'
     )
-    def post(self, request , *args, **kwargs ):
+    def post(self, request , *args, **kwargs ):   #aa369fdf89034a8181c0d51ee88a6ad9
         user = User.objects.get(id=request.user.id) 
         # user = User.objects.get(id=1) 
         serializer = self.serializer_class(data=request.data)
@@ -227,6 +296,24 @@ class OfferReceiveApproved(generics.GenericAPIView):
             return Response({'success':False,'detail':'Offer have been approved already'}, status=status.HTTP_400_BAD_REQUEST)
 
         application = LoanApplication.objects.get(id=offer.application.id)
+        application_data = json.loads(application.data)  
+        user.first_name = application_data['first_name'] 
+        user.last_name = application_data['last_name'] 
+        user.email = application_data['email'] 
+        user.gender = application_data['gender'].lower() 
+        user.phone = application_data['phone'] 
+        user.date_of_birth = application_data['date_of_birth'] 
+        user.marital_status = application_data['marital_status'].lower() 
+        user.children = application_data['children'] 
+        user.education_status = application_data['education'] 
+        user.employment_status = application_data['employment'] 
+        user.monthly_income = int(application_data['income']) 
+        user.business_name = application_data['employer']  
+        user.years_at_work = application_data['years_at_work']  
+        user.resident_type = application_data['residence'].lower()  
+        user. years_at_residence = application_data['years_at_residence']  
+        user.save()
+
         amount_junk = offer.total_repayment / offer.period 
         loan = Loan.objects.create(
             user=user, offer=offer, application=application , 
@@ -244,6 +331,13 @@ class OfferReceiveApproved(generics.GenericAPIView):
         application.status = 'accepted'
         application.save()
         other_offer = LoanOffer.objects.filter(application=application)
+
+
+        #  update user profile with application data
+        
+        
+        
+
         for model in other_offer:
             if model.is_approve == False :
                 model.delete()
@@ -286,8 +380,8 @@ class LoanScheduleListApiView(generics.ListAPIView):
         operation_summary='Get customer loans history'
     )
     def get(self, request, uuid , *args, **kwargs):
-        # user = User.objects.get(id=request.user.id) 
-        user = User.objects.get(id=1)
+        user = User.objects.get(id=request.user.id) 
+        # user = User.objects.get(id=1)
         try:
             loan = Loan.objects.get(uuid=uuid)
         except Loan.DoesNotExist:
@@ -380,6 +474,47 @@ class UserLoansApiView(generics.ListAPIView):
 
 
 
+
+class UserApplicationOfferApiView(generics.ListAPIView):
+    queryset = LoanOffer.objects.all() 
+    serializer_class = LoanOfferSerializer
+    permission_classes = [IsAuthenticated]  
+
+
+    def get(self, request,uuid , *args, **kwargs):
+        try:
+            app = LoanApplication.objects.get(uuid=uuid)
+            if app.status =='accepted':
+                return Response({'success':False,'detail': "Offer for this application is already accepted"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'success':False,'detail': "Application does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.get(id=request.user.id)
+        offers = LoanOffer.objects.filter(application=app, user=user)  
+        serializer = self.serializer_class(offers , many=True).data
+        return Response(serializer , status=status.HTTP_200_OK)
+
+
+# !!!!
+
+class UserLoanSceduleApiView(generics.ListAPIView):
+    queryset = LoanOffer.objects.all() 
+    serializer_class = LoanOfferSerializer
+    permission_classes = [IsAuthenticated]  
+
+    def get(self, request,uuid , *args, **kwargs):
+        try:
+            app = LoanApplication.objects.get(uuid=uuid)
+            if app.status =='accepted':
+                return Response({'success':False,'detail': "Offer for this application is already accepted"}, status=status.HTTP_400_BAD_REQUEST)
+        except:
+            return Response({'success':False,'detail': "Application does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        user = User.objects.get(id=request.user.id)
+        offers = LoanOffer.objects.filter(application=app, user=user)  
+        serializer = self.serializer_class(offers , many=True).data
+        return Response(serializer , status=status.HTTP_200_OK)
+
+## !!!!
+
 class UserLoanRemainingApiView(generics.ListAPIView):
     queryset = Loan.objects.all()
     serializer_class = UserCardSerializer
@@ -400,14 +535,16 @@ class UserLoanRemainingApiView(generics.ListAPIView):
                         loan=model, payment_status='paid').annotate(
                             sum=F('amount')).aggregate(total_sum= Sum('sum')
                         )
-            paid_loan += repayments['total_sum']   
+            paid_loan += 0 if repayments['total_sum']  == None else repayments['total_sum']            
         
         loan_debt = all_loan_sum - paid_loan 
+        current = Loan.objects.filter(user=user, status='active').first()
         
         response = {
             'success': True,
             'detail':'Loan debt retrieve',
-            'debt':loan_debt
+            'debt':loan_debt,
+            'loan': LoanSerializer(current).data
         }
         if loan_debt == 0 :
             response.update({

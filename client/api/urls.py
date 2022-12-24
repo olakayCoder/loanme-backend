@@ -11,4 +11,5 @@ urlpatterns = [
     path('applications/<str:uuid>', views.LoanApplicationRetrieveCreateApiView.as_view()),
     path('loanoffer/accept', views.OfferReceiveApproved.as_view()), 
     path('<str:uuid>', views.LoanRetrieveRequestApiView.as_view()), 
+    path('<str:uuid>/repay', views.LoanPaymentApiView.as_view()), 
 ]

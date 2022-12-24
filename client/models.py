@@ -140,6 +140,24 @@ class Loan(models.Model):
 
 
 
+    def owing_loan(self):
+        # total amount of all completed schedule
+        all_schedule  = LoanSchedule.objects.filter(
+            loan__id=self.id , status='completed').annotate(
+                            sum=F('amount')).aggregate(total_sum= Sum('sum')
+                        )
+        result = 0 if all_schedule['total_sum'] == None else all_schedule['total_sum']
+        k = self.amount - result  
+        return k
+
+    
+    def next_payment_amount(self):
+        if LoanSchedule.objects.filter( loan__id=self.id ,  status='pending').exists():
+            return LoanSchedule.objects.filter(
+                    loan__id=self.id , 
+                    status='pending'
+                ).first().amount
+        return 0
 
     @classmethod
     def get_total_paid(cls):
@@ -149,7 +167,7 @@ class Loan(models.Model):
                         loan=model, payment_status='paid').annotate(
                             sum=F('amount')).aggregate(total_sum= Sum('sum')
                         )
-            result += repayments['total_sum']   
+            result += 0 if repayments['total_sum']   == None else repayments['total_sum']  
         return result
 
 
@@ -175,15 +193,20 @@ class Loan(models.Model):
 
 
 class LoanSchedule(models.Model):
+    STATUS = (
+        ('pending','Pending'),
+        ('completed','Completed'),
+    )
     uuid = models.CharField(max_length=100 , null=True , blank=True , unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     loan = models.ForeignKey(Loan , on_delete=models.CASCADE)
     offer = models.ForeignKey(LoanOffer , on_delete=models.CASCADE)
+    status = models.CharField(max_length=10, choices=STATUS , default='pending')
     date = models.DateTimeField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+ 
 
 
 class Transaction(models.Model):

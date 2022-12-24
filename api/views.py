@@ -5,21 +5,42 @@ from rest_framework.views import APIView
 from .serializers import VerifyPaymentSerializer
 import requests
 from django.conf import settings
-from client.models import Transaction
-from account.models import UserCard , User
+from client.models import Transaction , LoanApplication
+from account.models import UserCard , User , UserBvn
 from rest_framework.permissions import (
     IsAuthenticated
 )
+from rest_framework.decorators import api_view , permission_classes
 # Create your views here.
 from helpers.generators import CustomValuesGenerator
-
-
+import json
+import time
 
 class Generate(APIView):
 
     def get(self, request):
         # CustomValuesGenerator.score_criteria()
-        CustomValuesGenerator.create_offers()
+        # CustomValuesGenerator.create_offers()
+        application = LoanApplication.objects.all().last()
+        application_data = json.loads(application.data) 
+        # print(application_data.__first_name) 
+    
+        application_data['last_name'] 
+        application_data['email'] 
+        application_data['gender'] 
+        application_data['phone'] 
+        application_data['date_of_birth'] 
+        application_data['marital_status'] 
+        application_data['children'] 
+        application_data['education'] 
+        application_data['employment'] 
+        application_data['income']  
+        application_data['employer']  
+        application_data['years_at_work']  
+        application_data['residence']  
+        application_data['years_at_residence']  
+
+        print(application_data['children']  )
         return Response(status=status.HTTP_200_OK)
 
 class VerifyPaymentApiView(generics.GenericAPIView):
@@ -88,3 +109,85 @@ class VerifyPaymentApiView(generics.GenericAPIView):
             case _:
                 return Response({ 'success':True, 'detail':'Payment successful updated'}, status=status.HTTP_200_OK)
         return Response({ 'success': False, 'detail':'Invalid reference type'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+class VerifyEmailApiView(APIView):
+    def post(self, request ):
+        email = request.data['email']
+        user = User.objects.filter(email=email).exists()
+        if user :
+            return Response({
+                'success':True,
+                'detail':'Email already exist'
+            },status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) 
+def verify_phone(request):
+    bvn = request.data['bvn']
+    user = User.objects.get(id=request.user.id) 
+    num = str(bvn)
+    v = num.count('7')
+    if v > 2 :
+        return Response({
+            'success':True,
+            'detail':'Bvn already exist'
+        },status=status.HTTP_400_BAD_REQUEST)
+    user.is_bvn = True
+    user.save() 
+    return Response(status=status.HTTP_200_OK) 
+
+class VerifyPhoneApiView(APIView):
+    def post(self, request ):
+        phone = request.data['phone']
+        user = User.objects.filter(phone=phone).exists()
+        if user :
+            return Response({
+                'success':True,
+                'detail':'Phone already exist'
+            },status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK)
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated]) 
+def verify_bvn(request):
+    bvn = request.data['bvn']
+    user = User.objects.get(id=request.user.id) 
+    num = str(bvn)
+    v = num.count('7')
+    if v > 2 :
+        return Response({
+            'success':True,
+            'detail':'Bvn already exist'
+        },status=status.HTTP_400_BAD_REQUEST)
+    user.is_bvn = True
+    user.save() 
+    time.sleep(3)
+    return Response(status=status.HTTP_200_OK) 
+
+
+
+
+class VerifyBvnApiView(generics.GenericAPIView):  
+    
+    def post(self, request ):
+        bvn = request.data['bvn']
+        # user = User.objects.filter(bvn=bvn).exists()
+        num = str(bvn)
+        v = num.count('7')
+        if v > 2 :
+            return Response({
+                'success':True,
+                'detail':'Phone already exist'
+            },status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_200_OK) 

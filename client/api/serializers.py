@@ -2,6 +2,7 @@ from rest_framework import serializers
 from client.models import (
     Loan, LoanApplication , LoanOffer ,LoanRepayment ,LoanSchedule ,LoanScoreBoard
 )
+from account.api.serializers import UserSerializer
 from datetime import datetime , timedelta
 
 class LoanRequestSerializer(serializers.Serializer):
@@ -37,18 +38,29 @@ class LoanRequestSerializer(serializers.Serializer):
 
 
 class LoanApplicationSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField('change_created_at_format')
     class Meta:
-        model = LoanApplication
-        fields = ['uuid', 'status','data']      
+        model = LoanApplication 
+        fields = ['uuid', 'status','data','created_at']      
 
+    def change_created_at_format(self , obj ):
+        return  obj.created_at.strftime("%b %d, %Y") 
 
 
 
 class LoanScheduleSerializer(serializers.ModelSerializer):
+    date = serializers.SerializerMethodField('change_date_format')
+    created_at = serializers.SerializerMethodField('change_created_at_format')
     class Meta:
         model = LoanSchedule
-        fields = "__all__"
+        fields = ["uuid", 'amount','status' , 'date' , 'created_at']
 
+
+    def change_date_format(self , obj ):
+        return  obj.date.strftime("%b %d, %Y") 
+
+    def change_created_at_format(self , obj ):
+        return  obj.created_at.strftime("%b %d, %Y") 
     
 
 
@@ -80,13 +92,24 @@ class LoanOfferAcceptSerializer(serializers.ModelSerializer):
 
 class LoanSerializer(serializers.ModelSerializer):
     offer = LoanOfferSerializer(read_only=True)
+    # next_payment =  LoanScheduleSerializer()  
+    user = UserSerializer(read_only=True)
+    schedule =  serializers.SerializerMethodField('loan_schedule')
     due_date = serializers.SerializerMethodField('change_date_format')
     created_at = serializers.SerializerMethodField('change_created_at_format')
     updated_at = serializers.SerializerMethodField('change_updated_at_format')
     class Meta:
         model = Loan
-        fields = ["uuid","user",'offer','amount','status','due_date','created_at','updated_at']
+        fields = [
+            "uuid","user",'offer', 'schedule',
+            'amount','status','due_date','created_at',
+            'updated_at', 'next_payment_amount', 'owing_loan'  
+        ]
 
+    def loan_schedule(self, obj):
+        sche = LoanSchedule.objects.filter(loan=obj)
+        serializer = LoanScheduleSerializer(sche , many=True)
+        return serializer.data
 
     def change_date_format(self , obj ):
         return  obj.due_date.strftime("%b %d, %Y")
