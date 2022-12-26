@@ -35,23 +35,19 @@ class CustomerDisableApiView(generics.GenericAPIView):
             customer = User.objects.get(uuid=uuid)
         except User.DoesNotExist:
             return Response({'success':False,'detail':'Customer does not exist'}, status=status.HTTP_404_NOT_FOUND)
-        customer.is_active = False
-        customer.save()
-        return Response({'success':True, 'detail':'Customer disabled'}, status=status.HTTP_200_OK)
 
-
-class CustomerEnableApiView(generics.GenericAPIView): 
-    serializer_class = UserSerializer
-    queryset = User.objects.all().exclude(is_staff=True)
-
-    def get(self, request,uuid, *args, **kwargs):
-        try:
-            customer = User.objects.get(uuid=uuid)
-        except User.DoesNotExist:
-            return Response({'success':False,'detail':'Customer does not exist'}, status=status.HTTP_404_NOT_FOUND)
+        if customer.is_active :
+            customer.is_active = False
+            customer.save()
+            return Response(
+                {'success':True,'type': '0', 'detail':'Customer disabled'}
+                , status=status.HTTP_200_OK)
         customer.is_active = True
         customer.save()
-        return Response({'success':True, 'detail':'Customer enabled'}, status=status.HTTP_200_OK)
+        return Response({'success':True,'type': '1',  'detail':'Customer enabled'}, status=status.HTTP_200_OK)
+
+
+
 
 
 

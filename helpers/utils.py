@@ -100,7 +100,7 @@ class LoanApplicationScore:
         """
         if not isinstance(data, Dict ):
             raise TypeError('Invalid argument type . %d is not of type dict' % (data))
-        # print(data)
+
         return None
 
 

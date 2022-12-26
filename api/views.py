@@ -5,8 +5,12 @@ from rest_framework.views import APIView
 from .serializers import VerifyPaymentSerializer
 import requests
 from django.conf import settings
-from client.models import Transaction , LoanApplication
-from account.models import UserCard , User , UserBvn
+from client.models import (
+    Transaction , LoanApplication, LoanOffer , Loan
+)
+from account.models import (
+    UserCard , User , UserBvn , 
+)
 from rest_framework.permissions import (
     IsAuthenticated
 )
@@ -15,6 +19,7 @@ from rest_framework.decorators import api_view , permission_classes
 from helpers.generators import CustomValuesGenerator
 import json
 import time
+from django.http import HttpResponse
 
 class Generate(APIView):
 
@@ -23,7 +28,6 @@ class Generate(APIView):
         # CustomValuesGenerator.create_offers()
         application = LoanApplication.objects.all().last()
         application_data = json.loads(application.data) 
-        # print(application_data.__first_name) 
     
         application_data['last_name'] 
         application_data['email'] 
@@ -39,8 +43,6 @@ class Generate(APIView):
         application_data['years_at_work']  
         application_data['residence']  
         application_data['years_at_residence']  
-
-        print(application_data['children']  )
         return Response(status=status.HTTP_200_OK)
 
 class VerifyPaymentApiView(generics.GenericAPIView):
@@ -48,7 +50,6 @@ class VerifyPaymentApiView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]  
 
     def post(self, request , *args, **kwargs):
-        print(request.user)   
         user = User.objects.get(id=request.user.id) 
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -112,10 +113,6 @@ class VerifyPaymentApiView(generics.GenericAPIView):
 
 
 
-
-
-
-
 class VerifyEmailApiView(APIView):
     def post(self, request ):
         email = request.data['email']
@@ -147,7 +144,13 @@ def verify_phone(request):
 
 class VerifyPhoneApiView(APIView):
     def post(self, request ):
-        phone = request.data['phone']
+        
+        phone = request.data.get('phone', None )
+        if phone is None:
+            return Response({
+                'success':True,
+                'detail':'Phone field required'
+            },status=status.HTTP_400_BAD_REQUEST)
         user = User.objects.filter(phone=phone).exists()
         if user :
             return Response({
@@ -191,3 +194,138 @@ class VerifyBvnApiView(generics.GenericAPIView):
                 'detail':'Phone already exist'
             },status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_200_OK) 
+
+
+
+
+import csv
+import xlwt
+
+class ExportDataLoansAsCSVApiView(APIView):
+
+
+    def get(self , request , *args ,**kwargs):
+        users = Loan.objects.all()
+        status = self.kwargs.get('user_id',None)
+        response = HttpResponse('text/csv')
+        # force download.
+        response['Content-Disposition'] = 'attachment;filename=customers-loans.csv'
+        # the csv writer
+        writer = csv.writer(response)
+        field_names = [
+            'UUID','USER','STATUS','AMOUNT','DATE','DUE_DATE'
+            ]
+        # Write a first row with header information
+        writer.writerow(field_names)
+        # Write data rows
+        for obj in users:
+            writer.writerow([
+                obj.uuid ,f'{obj.user.first_name } {obj.user.last_name}',
+                obj.status , obj.amount , obj.created_at , obj.due_date
+                ])
+        return response
+
+
+
+class ExportDataUsersAsCSVApiView(APIView):
+
+
+    def get(self , request , *args ,**kwargs):
+        users = User.objects.all().exclude(is_staff=True)
+        status = self.kwargs.get('user_id',None)
+        response = HttpResponse('text/csv')
+        # force download.
+        response['Content-Disposition'] = 'attachment;filename=customers.csv'
+        # the csv writer
+        writer = csv.writer(response)
+        field_names = [   
+            'UUID','FIRST_NAME','LAST_NAME','EMAIL','GENDER','IS_ACTIVE','CREATED_AT',
+            'DATE_OF_BIRTH','PHONE', 'MARITAL_STATUS','CHILDREN','RESIDENT_TYPE','COUNTRY','STATE','CITY', 
+            'ADDRESS1', 'ADDRESS2','EDUCATIONAL_STATUS','EMPLOYMENT_STATUS', 'BUSINESS_NAME' , 'MONTHLY_INCOME'
+        ]
+
+        # Write a first row with header information
+        writer.writerow(field_names)
+        # Write data rows
+        for obj in users:
+            writer.writerow([
+                obj.uuid , obj.first_name, obj.last_name , obj.email , obj.gender , obj.is_active , obj.created_at , obj.date_of_birth,
+                obj.phone, obj.marital_status, obj.children, obj.resident_type , obj.country , obj.state , obj.city , obj.address1 , obj.address2 ,
+                obj.educational_status, obj.employment_status , obj.business_name , obj.monthly_income
+                ])
+        return response
+
+
+
+
+class ExportDataApplicationsAsCSVApiView(APIView):
+    def get(self , request , *args ,**kwargs):
+        users = LoanApplication.objects.all()
+        status = self.kwargs.get('user_id',None)
+        response = HttpResponse('text/csv')
+        # force download.
+        response['Content-Disposition'] = 'attachment;filename=customers-applications.csv'
+        # the csv writer
+        writer = csv.writer(response)
+        field_names = [   
+            'UUID','USER','STATUS','AMOUNT','CREATED_AT',
+        ]
+
+        # Write a first row with header information
+        writer.writerow(field_names)
+        # Write data rows
+        for obj in users:
+            obj_data = json.loads(obj.data)  
+            writer.writerow([
+                obj.uuid , f'{obj.user.first_name } {obj.user.last_name}', 
+                obj.status , obj_data['amount'] , obj.created_at ,
+                ])
+        return response
+
+
+
+
+class ExportDataExcel(APIView):
+
+    def get(self, request, *args , **kwargs):
+        response = HttpResponse(content_type='application/ms-excel')
+        response['Content-Disposition'] = 'attachment; filename="users.xls"'
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('Users')
+        # Sheet header, first row
+        row_num = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+        columns = [
+            'ID', 'First name', 
+            'Lat name','Email' , 
+            'Loan amount', 'Repayment amount',
+            'Due date','Status' 
+        ]
+        for col_num in range(len(columns)):
+            ws.write(row_num, col_num, columns[col_num], font_style)
+        # Sheet body, remaining rows
+        font_style = xlwt.XFStyle()
+        rows = Loan.objects.all().values_list(
+            'uuid', 'user.first_name', 
+            'user.last_name','user.email',
+            'offer.offer_amount','user.status' ,'due_date'
+        )
+        for row in rows:
+            row_num += 1
+            for col_num in range(len(row)):
+                ws.write(
+                    row_num, col_num, 
+                    row[col_num], font_style)
+
+        wb.save(response)
+        return response
+
+
+
+
+
+    
+
+
+    

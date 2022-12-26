@@ -2,26 +2,19 @@ import smtplib, ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from django.template.loader import render_to_string
-# import environ
+import environ
 from email.message import EmailMessage
 import smtplib
 import asyncio                   
+from django.conf import settings
 
-
-class environ():
-    class Env():
-        class read_env():
-            pass 
-
+     
 
 env = environ.Env() 
 environ.Env.read_env()
 
-# sender_email = env('EMAIL_SENDER')
-# password = env('EMAIL_PASSWORD')
-
-sender_email = 'kkkk'
-password = 'kkkkk'
+sender_email = env('EMAIL_SENDER')
+password = env('EMAIL_PASSWORD')
 
 
 class MailServices():
@@ -33,11 +26,8 @@ class MailServices():
         message["Subject"] = "Reset your Buskeit password"
         message["From"] = sender_email
         message["To"] = receiver_email
-        reset_link = f'http://127.0.0.1:3000/password/{token}/{uuidb64}/reset'
-        print('***'*100)
-        print(reset_link)
-        print('***'*100)
-        html = render_to_string('accounts/password-reset-mail.html', {'reset_link': reset_link})
+        reset_link = f'{settings.FRONTEND_DOMAIN}/password/reset/{token}/{uuidb64}/confirm' 
+        html = render_to_string('account/password-reset-mail.html', {'reset_link': reset_link})
         part = MIMEText(html, "html")
         # Add HTML/plain-text parts to MIMEMultipart message
         message.attach(part)

@@ -1,7 +1,7 @@
 from rest_framework import status  , generics
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from account.models import User , Phone , UserBank
+from account.models import User , Phone , UserBank , UserCard , UserBvn
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import DjangoUnicodeDecodeError, force_bytes,   force_str, smart_str
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -97,7 +97,6 @@ class UserSignupApiView(generics.GenericAPIView):
                 'user': UserSerializer(new_user).data
             } , status=status.HTTP_200_OK)
         except Exception as e:
-            print(e)
             new_user.delete() 
             return Response({
                 'success':False,
@@ -169,14 +168,13 @@ class AccountSetupBvnApiView(generics.GenericAPIView):
         if serializer.is_valid():
             if serializer.validated_data.get('type','BVN') in ModelFieldOptions.KYC_TYPE:
                 number = serializer.validated_data['number']
-                print(len(str(number)))
                 if len(str(number)) != 10 : 
                     response = {'success':False,'detail': 'Invalid  number length'}
                     return Response(response, status=status.HTTP_400_BAD_REQUEST)
                 time.sleep(5) 
                 return Response({'success':False,'detail': 'BVN verification successful'} , status=status.HTTP_200_OK)
 
-        print(CustomValuesGenerator.random_bvn(20))
+        # print(CustomValuesGenerator.random_bvn(20))
         response = {'success':False,'detail': 'Invalid credential provided'}
         for error_type , error_msg in serializer.errors.items():
             if error_type == 'type' :
@@ -196,6 +194,12 @@ class AddDebitCardApiView(generics.GenericAPIView):
         paystack_public = settings.PAYSTACK_PUBLIC_KEY 
         uuidb64 = urlsafe_base64_encode(force_bytes(user.id))
         reference = f'ref_{uuidb64}_{uuid4().hex}' 
+        if UserCard.objects.filter(user=user).exists() :
+            return Response({
+                'success':False,
+                'detail':'You already have a bank card linked'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         transaction = Transaction.objects.create(
             user=user, type='card', amount='50', 
             reference=reference 
@@ -215,8 +219,16 @@ class AddUserBankApiView(generics.GenericAPIView):
     permission_classes = [ IsAuthenticated]
   
     def post(self, request, *args, **kwargs):
+
         user = User.objects.get(id=request.user.id) 
         data = request.data
+        if UserBank.objects.filter(user=user).exists():
+            response = {
+            'success':True,
+            'detail': 'Account added successfully',
+            }  
+            time.sleep(3)
+            return Response( response , status=status.HTTP_201_CREATED )
         bank = UserBank.objects.create(
             user=user,
             name= data['name'],
@@ -276,8 +288,21 @@ class LoginApiView(generics.GenericAPIView):
                 raise PermissionDenied(
                     "Your account is disabled, kindly contact the administrative")
         if mail:
-            return Response({'success': False , 'detail': "Your account is disabled, kindly contact the administrative"}, status=status.HTTP_401_UNAUTHORIZED)
-        return Response({'success': False , 'detail': 'Invalid login credential'}, status=status.HTTP_400_BAD_REQUEST)
+            user = User.objects.get(email=email)
+            if user.is_active == False:
+                return Response(
+                    {'success': False , 
+                    'detail': "Your account is disabled,999 kindly contact the administrative"
+                    }, status=status.HTTP_401_UNAUTHORIZED 
+                )
+        
+        return Response(
+            {
+            'success': False , 
+            'detail': 'Invalid login credential'
+            },
+             status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 
@@ -336,6 +361,7 @@ class ResetPasswordRequestEmailApiView(generics.GenericAPIView):
         email = request.data['email']
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
+           
             try:
                 user = User.objects.get(email=email)
                 uuidb64 = urlsafe_base64_encode(force_bytes(user.id))
@@ -343,13 +369,14 @@ class ResetPasswordRequestEmailApiView(generics.GenericAPIView):
                 Thread(target=MailServices.forget_password_mail, kwargs={
                     'email': user.email ,'token': token , 'uuidb64':uuidb64
                 }).start()
+                
                 return Response( 
-                        {'success':True , 'message': 'Password reset instruction will be sent to the mail' },
+                        {'success':True , 'detail': 'Password reset instruction sent' },
                         status=status.HTTP_200_OK
                         )
             except:
                 return Response( 
-                    {'success':True , 'message': 'Password reset instruction will be sent to the mail' }, 
+                    {'success':True , 'detail': 'Password reset instruction  sent' }, 
                     status=status.HTTP_200_OK
                     )
         return Response( 
@@ -369,21 +396,22 @@ class SetNewPasswordTokenCheckApi(generics.GenericAPIView):
     def post(self, request, token , uuidb64 ):
         try:
             id = smart_str(urlsafe_base64_decode(uuidb64))
+            
             user = User.objects.get(id=id)
             password1 = request.data['password1']
             password2 = request.data['password2']
             if password1 != password2 :
-                return  Response({'success':False ,'message': 'Password does not match'} , status=status.HTTP_400_BAD_REQUEST)
+                return  Response({'success':False ,'detail': 'Password does not match'} , status=status.HTTP_400_BAD_REQUEST)
             if PasswordResetTokenGenerator().check_token(user, token):
                 data = request.data
                 serializer = self.serializer_class(data=data)
                 serializer.is_valid(raise_exception=True)
                 user.set_password(serializer.validated_data['password1'])
                 user.save() 
-                return Response({'success':True , 'message':'Password updated successfully'}, status=status.HTTP_200_OK)
-            return Response({'success':False ,'message':'Token is not valid'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'success':True , 'detail':'Password updated successfully'}, status=status.HTTP_200_OK)
+            return Response({'success':False ,'detail':'Token is not valid'}, status=status.HTTP_400_BAD_REQUEST)
         except DjangoUnicodeDecodeError as identifier:
-            return Response({'success':False ,'message': 'Token is not valid'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':False ,'detail': 'Token is not valid'}, status=status.HTTP_400_BAD_REQUEST)
 
 
 #  This view handle password update within app ( authenticated user)
@@ -403,7 +431,7 @@ class ChangePasswordView(generics.GenericAPIView):
     )
     def post(self, request, *args, **kwargs):
         self.object=self.get_object()
-        serializer=self.get_serializer(data=request.data)
+        serializer=self.serializer_class(data=request.data) 
         if serializer.is_valid():
             password1 = serializer.validated_data['password1']
             password2 = serializer.validated_data['password2']

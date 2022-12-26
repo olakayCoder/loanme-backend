@@ -76,7 +76,6 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         score = 0
         data = request.data
         user = User.objects.get(id=request.user.id)
-        # print(data)  
         # user = User.objects.get(id=1)
         if Loan.objects.filter(user=user, status='active').exists():
             return Response(
@@ -91,7 +90,6 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         children = data['children']
         gender = data['gender']
         personal_score_option = ScoreCriteriaOption.objects.filter(category__name='Personal info')
-        # print(ScoreCriteriaOption.get_total_points())
         for val in personal_score_option:
             if marital_status == val.name:
                 score += val.points
@@ -114,7 +112,6 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         work_options = ScoreCriteriaOption.objects.filter(category__name='Work')
         for val in work_options:
             if work_duration == val.name:
-                print(work_duration) 
                 score += val.points
 
         # residence
@@ -151,12 +148,9 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             eligible_amount = (amount_requested) * 0.00
             return Response({'detail':'Not eligible for loan'}, status=status.HTTP_400k)
         # calculating loan offer for the user to generate loan offer
-        # print(score)  
-        # print(crc)
         # loan_offers_list = [] 
         offers = Offer.objects.filter(type='month')
         for offer in offers:
-            print(offer)
             offer_amount = eligible_amount
             offer_interest = round( float(eligible_amount * (offer.percentage / 100)) , 2 )
             offer_total_repayment =  round( float(eligible_amount + (eligible_amount * (offer.percentage / 100))) , 2)
@@ -180,7 +174,6 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
                 total_repayment = offer_total_repayment ,
                 offer_amount=offer_amount,   
             )
-            print(offer_amount) 
         m = LoanOffer.objects.filter(user=user, application=app)
         time.sleep(4) 
         serializer = LoanOfferSerializer(m , many=True )  

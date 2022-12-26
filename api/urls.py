@@ -25,6 +25,10 @@ urlpatterns = [
     path('email/verify', views.VerifyEmailApiView.as_view()),    
     path('phone/verify', views.VerifyPhoneApiView.as_view()),    
     path('bvn/verify', views.verify_bvn),    
+    path('export/loans/csv', views.ExportDataLoansAsCSVApiView.as_view()),    
+    path('export/users/csv', views.ExportDataUsersAsCSVApiView.as_view()),    
+    path('export/applications/csv', views.ExportDataApplicationsAsCSVApiView.as_view()),    
+    # path('export/users/excel', views.ExportDataExcel.as_view()),    
     path('generate', views.Generate.as_view()),    
     # path('generate')
 ]      
