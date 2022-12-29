@@ -78,6 +78,7 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
         user = User.objects.get(id=request.user.id)
         # user = User.objects.get(id=1)
         if Loan.objects.filter(user=user, status='active').exists():
+            time.sleep(4)
             return Response(
                 {'success':False, 
                 'detail':'You have an active loan. Kindly repay so have access to loan'
@@ -130,14 +131,16 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             if loan_reason == val.name:
                 score += val.points
         f = ['Performing', 'Non performing']
-        # crc = f[1] 
-        crc = random.choice(f)
+        crc = f[1] 
+        print(ScoreCriteriaOption.get_total_points()) 
+        # crc = random.choice(f)
         loan_reason_option_score = ScoreCriteriaOption.objects.filter(category__name='CRC')
         for val in loan_reason_option_score:
             if crc == val.name: 
                 score += val.points
         amount_requested = int(data['amount'])
         #  checking the amount eligibility of the user using the score
+        print(score)
         if score >= 70 :
             eligible_amount = (amount_requested) * 1.00 
         if score <= 70 and score >= 60 :
@@ -146,9 +149,11 @@ class LoanApplicationRetrieveCreateApiView(generics.GenericAPIView):
             eligible_amount = (amount_requested) * 0.50 
         if score < 50:
             eligible_amount = (amount_requested) * 0.00
-            return Response({'detail':'Not eligible for loan'}, status=status.HTTP_400k)
+            time.sleep(4)
+            return Response({'detail':'You are not eligible for loan'}, status=status.HTTP_400_BAD_REQUEST)
         # calculating loan offer for the user to generate loan offer
         # loan_offers_list = [] 
+
         offers = Offer.objects.filter(type='month')
         for offer in offers:
             offer_amount = eligible_amount
@@ -294,7 +299,7 @@ class OfferReceiveApproved(generics.GenericAPIView):
         user.last_name = application_data['last_name'] 
         user.email = application_data['email'] 
         user.gender = application_data['gender'].lower() 
-        user.phone = application_data['phone'] 
+        # user.phone = application_data['phone']  
         user.date_of_birth = application_data['date_of_birth'] 
         user.marital_status = application_data['marital_status'].lower() 
         user.children = application_data['children'] 

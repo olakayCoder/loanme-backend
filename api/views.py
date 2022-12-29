@@ -63,6 +63,8 @@ class VerifyPaymentApiView(generics.GenericAPIView):
                 r = requests.get(url , headers=headers)
                 response = r.json()
                 if response['data']['status'] == 'success':
+                    user.is_card = True
+                    user.save() 
                     amount = response['data']['amount'] 
                     # update the status of ref transaction success
                     payment = Transaction.objects.get(reference=reference )

@@ -23,7 +23,7 @@ class MailServices():
         token = kwargs['token']
         uuidb64 = kwargs['uuidb64']
         message = MIMEMultipart("alternative")
-        message["Subject"] = "Reset your Buskeit password"
+        message["Subject"] = "Reset your LoanIt password"
         message["From"] = sender_email
         message["To"] = receiver_email
         reset_link = f'{settings.FRONTEND_DOMAIN}/password/reset/{token}/{uuidb64}/confirm' 

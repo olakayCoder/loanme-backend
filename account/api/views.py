@@ -209,7 +209,7 @@ class AddDebitCardApiView(generics.GenericAPIView):
             'email': user.email, 
             'reference': reference ,
         }
-        user.is_card = True
+        # user.is_card = True
         user.save()
         return Response( response , status=status.HTTP_200_OK)
 
