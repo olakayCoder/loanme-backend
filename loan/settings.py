@@ -34,7 +34,13 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG' , default=False)
 
-ALLOWED_HOSTS = ["*", "185.3.95.166" , "185-3-95-166.ip.linodeusercontent.com" , "185-3-95-166.ip.linodeusercontent" , "localhost"] 
+ALLOWED_HOSTS = [
+    "*", "185.3.95.166" , 
+    "185-3-95-166.ip.linodeusercontent.com" , 
+    "185-3-95-166.ip.linodeusercontent" , 
+    "localhost",
+    "https://web-production-fd13.up.railway.app"
+] 
 
 
 # Application definition
@@ -156,7 +162,10 @@ PAYSTACK_SECRET_KEY = env('PAYSTACK_PUBLIC_KEY')
 CORS_ALLOW_ALL_ORIGINS = True 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-fd13.up.railway.app"
+    "https://web-production-fd13.up.railway.app/",
+    "https://web-production-fd13.up.railway.app",
+    'http://localhost:8000', 
+    'http://127.0.0.1',
 ]
 
 REST_FRAMEWORK = {
