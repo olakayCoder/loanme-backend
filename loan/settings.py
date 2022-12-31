@@ -34,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG' , default=False)
 
-ALLOWED_HOSTS = ["*","web-production-fd13.up.railway.app"] 
+ALLOWED_HOSTS = ["*","web-production-fd13.up.railway.app","web-production-fd13.up.railway"] 
 
 
 # Application definition
