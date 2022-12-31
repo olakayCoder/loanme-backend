@@ -155,6 +155,8 @@ PAYSTACK_SECRET_KEY = env('PAYSTACK_PUBLIC_KEY')
 
 CORS_ALLOW_ALL_ORIGINS = True 
 
+CSRF_TRUSTED_ORIGINS = ["https://web-production-fd13.up.railway.app"]
+
 REST_FRAMEWORK = {
     "NON_FIELD_ERRORS_KEY" : 'errors',
     "DEFAULT_AUTHENTICATION_CLASSES" : (
