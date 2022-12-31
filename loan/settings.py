@@ -34,7 +34,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG' , default=False)
 
-ALLOWED_HOSTS = ["*"] 
+ALLOWED_HOSTS = ["*", "185.3.95.166" , "185-3-95-166.ip.linodeusercontent.com" , "185-3-95-166.ip.linodeusercontent" , "localhost"] 
 
 
 # Application definition
