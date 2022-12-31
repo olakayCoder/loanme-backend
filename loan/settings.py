@@ -156,6 +156,12 @@ PAYSTACK_PUBLIC_KEY = env('PAYSTACK_PUBLIC_KEY')
 FRONTEND_DOMAIN = 'http://127.0.0.1:3000'
 
 CORS_ALLOW_ALL_ORIGINS = True 
+CSRF_TRUSTED_ORIGINS = [
+    "https://web-production-fd13.up.railway.app/",
+    "https://web-production-fd13.up.railway.app",
+    'http://localhost:8000', 
+    'http://127.0.0.1',
+]
 
 REST_FRAMEWORK = {
     "NON_FIELD_ERRORS_KEY" : 'errors',
